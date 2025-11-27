@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGC - Pinturas Panorámica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-primary: #005f73;
+            --brand-secondary: #0a9396;
+            --brand-highlight: #ae2012;
+            --bg-color: #f4f6f8;
+            --text-dark: #2d3436;
+        }
+        body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg-color); color: var(--text-dark); }
+        
+        /* BARRA SUPERIOR MODIFICADA: Logo centrado y más alto */
+        .top-bar {
+            background: white;
+            height: 100px; /* Más alta */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centrado horizontal */
+            padding: 0 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: fixed; top: 0; width: 100%; box-sizing: border-box; z-index: 1000;
+        }
+        /* LOGO MÁS GRANDE */
+        .logo-img { height: 80px; width: auto; } 
+        
+        .main-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh;
+            padding-top: 100px; /* Ajustado a la nueva altura de barra */
+        }
+        h1 { color: var(--brand-primary); font-size: 2.5rem; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px; }
+        p { color: #636e72; font-size: 1.2rem; margin-bottom: 50px; }
+        
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; max-width: 1000px; width: 90%; }
+        .menu-card {
+            background: white; padding: 40px 20px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            text-decoration: none; color: var(--brand-primary); border-bottom: 5px solid var(--brand-secondary);
+            display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; position: relative; overflow: hidden;
+        }
+        .menu-card:hover { transform: translateY(-8px); border-bottom-color: var(--brand-highlight); }
+        .card-number { font-size: 4rem; font-weight: 700; opacity: 0.1; position: absolute; top: -10px; right: 10px; }
+        .card-title { font-size: 1.3rem; font-weight: 700; text-transform: uppercase; margin-top: 10px; }
+        
+        .btn-start {
+            margin-top: 50px; background: var(--brand-primary); color: white; padding: 15px 50px; border-radius: 30px;
+            text-decoration: none; font-weight: bold; transition: background 0.3s;
+        }
+        .btn-start:hover { background: var(--brand-secondary); }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <img src="Logo.png" alt="Logo Pinturas Panorámica" class="logo-img">
+    </div>
+
+    <div class="main-container">
+        <h1>Mapa de Procesos SIPOC</h1>
+        <p>Sistema de Gestión de Calidad Integrado</p>
+
+        <div class="menu-grid">
+            <a href="Planificacion.html" class="menu-card">
+                <span class="card-number">1</span>
+                <span class="card-title">Planificación</span>
+            </a>
+            <a href="Laboratorio.html" class="menu-card">
+                <span class="card-number">2</span>
+                <span class="card-title">Laboratorio</span>
+            </a>
+            <a href="Bodega.html" class="menu-card">
+                <span class="card-number">3</span>
+                <span class="card-title">Bodega</span>
+            </a>
+            <a href="Produccion.html" class="menu-card">
+                <span class="card-number">4</span>
+                <span class="card-title">Producción</span>
+            </a>
+        </div>
+
+        <a href="Planificacion.html" class="btn-start">Comenzar Recorrido →</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIPOC - Producción</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS IDÉNTICO AL ANTERIOR */
+        :root { --brand-primary: #005f73; --brand-secondary: #0a9396; --brand-highlight: #ae2012; --bg-color: #f4f6f8; --text-dark: #2d3436; --header-s: #264653; --header-i: #2a9d8f; --header-p: #e76f51; --header-o: #2a9d8f; --header-c: #264653; }
+        body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg-color); color: var(--text-dark); padding-top: 80px; padding-bottom: 40px;}
+        .nav-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: white; display: flex; justify-content: space-between; align-items: center; padding: 0 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .logo-container img { height: 45px; width: auto; vertical-align: middle; }
+        .nav-controls a { text-decoration: none; color: var(--brand-primary); font-weight: bold; font-size: 0.9rem; padding: 10px 20px; border-radius: 20px; transition: background 0.2s; margin-left: 10px; }
+        .nav-controls a:hover { background: #eafcfc; } .nav-controls a.active { background: var(--brand-primary); color: white; }
+        .main-title { text-align: center; margin-bottom: 30px; }
+        .main-title h1 { color: var(--brand-primary); text-transform: uppercase; letter-spacing: 3px; font-size: 1.8rem; margin: 0; border-bottom: 3px solid var(--brand-highlight); display: inline-block; padding-bottom: 8px; }
+        .main-title p { color: #636e72; font-size: 1rem; margin-top: 10px; font-weight: 500; }
+        .sipoc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 1600px; width: 95%; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
+        .col-header { color: white; padding: 12px; text-align: center; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; border-radius: 4px; font-size: 0.85rem; letter-spacing: 1px; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        .bg-s { background: var(--header-s); } .bg-i { background: var(--header-i); } .bg-p { background: var(--header-p); } .bg-o { background: var(--header-o); } .bg-c { background: var(--header-c); }
+        .column { display: flex; flex-direction: column; gap: 10px; }
+        .card { background: #fff; border-left: 4px solid var(--brand-secondary); padding: 12px; font-size: 0.85rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-radius: 4px; line-height: 1.4; }
+        .process-list { counter-reset: step-counter; padding-left: 10px; }
+        .process-item { position: relative; padding: 10px 10px 10px 25px; margin-bottom: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+        .process-item::before { counter-increment: step-counter; content: counter(step-counter); position: absolute; left: -10px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; background: var(--header-p); color: white; border-radius: 50%; text-align: center; line-height: 22px; font-size: 0.7rem; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .phase-bar { grid-column: 1 / -1; background: #eafcfc; color: var(--brand-primary); padding: 10px 20px; margin: 20px 0 10px 0; font-weight: 800; text-transform: uppercase; border-left: 5px solid var(--brand-highlight); border-radius: 0 6px 6px 0; font-size: 0.9rem; }
+        @media (max-width: 1100px) { .sipoc-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <nav class="nav-bar">
+        <div class="logo-container"><img src="Logo.png" alt="Logo"></div>
+        <div class="nav-controls">
+            <a href="Bodega.html">← Bodega</a>
+            <a href="Produccion.html" class="active">4. Producción</a>
+            <a href="Portada.html" style="color:var(--brand-highlight);">Finalizar ↺</a>
+        </div>
+    </nav>
+
+    <div class="main-title">
+        <h1>SIPOC - Producción</h1>
+        <p>Flujo de Proceso de Fabricación</p>
+    </div>
+
+    <div class="sipoc-grid">
+        <div class="col-header bg-s">Suppliers</div>
+        <div class="col-header bg-i">Inputs</div>
+        <div class="col-header bg-p">Process</div>
+        <div class="col-header bg-o">Outputs</div>
+        <div class="col-header bg-c">Customers</div>
+
+        <div class="column">
+            <div class="card">Bodega Materias Primas</div>
+            <div class="card">Planificación</div>
+            <div class="card">Laboratorio</div>
+            <div class="card">Operador de Grúa</div>
+        </div>
+
+        <div class="column">
+            <div class="card">Carga Física (Pallets MP)</div>
+            <div class="card">Orden de Trabajo Física</div>
+            <div class="card">Prioridad Fabricación</div>
+            <div class="card">Aprobación Muestras</div>
+            <div class="card">Transporte de "Olla"</div>
+        </div>
+
+        <div class="column process-list">
+            <div class="process-item">Recepción y Verificación.</div>
+            <div class="process-item">Inicio de Producción (Gel).</div>
+            <div class="process-item">Primer Control de Calidad.</div>
+            <div class="process-item">Preparación de Insumos.</div>
+            <div class="process-item">Incorporación Sólidos/Líquidos.</div>
+            <div class="process-item">Segundo Control Calidad.</div>
+            <div class="process-item">Traslado a Zona Resinas.</div>
+            <div class="process-item">Retorno a Mezcla.</div>
+            <div class="process-item">Ajuste de Parámetros.</div>
+            <div class="process-item">Muestra Final.</div>
+            <div class="process-item">Detención de Proceso.</div>
+            <div class="process-item">Transferencia de Mando.</div>
+            <div class="process-item">Traslado y Pesaje.</div>
+            <div class="process-item">Envasado (Drenado).</div>
+        </div>
+
+        <div class="column">
+            <div class="card">Muestras para Lab</div>
+            <div class="card">Producto Base Aprobado</div>
+            <div class="card">OT Física Aprobada</div>
+        </div>
+
+        <div class="column">
+            <div class="card">Laboratorio</div>
+            <div class="card">Área de Envasado / IBC</div>
+            <div class="card">Coloristas</div>
+            <div class="card">Costeo</div>
+        </div>
+    </div>
+</body>
+</html>
