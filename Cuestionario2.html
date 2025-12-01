@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario Dinámico de Neuroanatomía</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; color: #333; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        
+        /* Panel de Control */
+        .control-panel { 
+            background-color: #e9ecef; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            border: 1px solid #ced4da; 
+        }
+        .control-panel label { font-size: 1.1em; margin-right: 10px; }
+        .control-panel input { 
+            padding: 8px; 
+            border-radius: 4px; 
+            border: 1px solid #ccc; 
+            width: 60px; 
+            text-align: center; 
+            font-size: 16px; 
+        }
+        .control-panel button { 
+            padding: 10px 20px; 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin-left: 10px; 
+            transition: background 0.3s; 
+        }
+        .control-panel button:hover { background-color: #218838; }
+
+        /* Preguntas */
+        h2 { background-color: #3498db; color: #fff; padding: 10px; border-radius: 4px; margin-top: 30px; }
+        .question-block { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .question-text { font-weight: bold; margin-bottom: 10px; font-size: 1.1em; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        .option-btn { 
+            padding: 10px; 
+            border: 2px solid #ddd; 
+            background: #fff; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            transition: all 0.2s; 
+            text-align: left; 
+        }
+        .option-btn:hover:not(:disabled) { background-color: #f0f0f0; }
+        .option-btn:disabled { cursor: default; }
+        
+        .correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724; }
+        .incorrect { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+        
+        /* Marcador Flotante */
+        .score-board { 
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            background: #2c3e50; 
+            color: #fff; 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            z-index: 1000; 
+            font-weight: bold; 
+            font-size: 1.2em;
+        }
+        
+        @media (max-width: 600px) {
+            .options { grid-template-columns: 1fr; }
+            .score-board { position: static; margin-bottom: 20px; text-align: center; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="score-board">
+    Puntaje: <span id="score">0</span> / <span id="total-possible">0</span>
+</div>
+
+<div class="container">
+    <h1>Cuestionario de Neuroanatomía</h1>
+    
+    <div class="control-panel">
+        <label for="numQuestions"><strong>Preguntas por tema (Máx 10):</strong></label>
+        <input type="number" id="numQuestions" value="5" min="1" max="10">
+        <button onclick="startQuiz()">Generar Cuestionario Aleatorio</button>
+    </div>
+
+    <div id="quiz-container">
+        <p style="text-align:center; color: #555;">Configura la cantidad de preguntas y presiona el botón verde para comenzar.</p>
+    </div>
+</div>
+
+<script>
+const allQuestions = [
+    // --- TEMA 1: Generalidades del sistema nervioso ---
+    { topic: "Generalidades del sistema nervioso", question: "1. ¿Cuál es la unidad básica estructural y funcional del sistema nervioso?", options: ["A) El astrocito", "B) La neurona", "C) La microglía", "D) El oligodendrocito"], answer: 1 },
+    { topic: "Generalidades del sistema nervioso", question: "2. ¿Qué estructura pertenece al Sistema Nervioso Central (SNC)?", options: ["A) Ganglios sensitivos", "B) Nervios craneales", "C) Médula espinal", "D) Nervios raquídeos"], answer: 2 },
+    { topic: "Generalidades del sistema nervioso", question: "3. ¿Qué capa germinal da origen al sistema nervioso?", options: ["A) Mesodermo", "B) Endodermo", "C) Ectodermo", "D) Notocorda"], answer: 2 },
+    { topic: "Generalidades del sistema nervioso", question: "4. Las neuronas sensitivas también se conocen como:", options: ["A) Eferentes", "B) Aferentes", "C) Interneuronas", "D) Motoras"], answer: 1 },
+    { topic: "Generalidades del sistema nervioso", question: "5. ¿Qué célula de la glía produce mielina en el Sistema Nervioso Central?", options: ["A) Célula de Schwann", "B) Astrocito", "C) Microglía", "D) Oligodendrocito"], answer: 3 },
+    { topic: "Generalidades del sistema nervioso", question: "6. ¿Qué estructura forma la vaina de mielina en el Sistema Nervioso Periférico?", options: ["A) Oligodendrocito", "B) Célula de Schwann", "C) Astrocito protoplasmático", "D) Célula ependimaria"], answer: 1 },
+    { topic: "Generalidades del sistema nervioso", question: "7. ¿Cuál es la función principal de las dendritas?", options: ["A) Transmitir el impulso lejos del soma", "B) Producir neurotransmisores", "C) Recibir señales de entrada", "D) Aislar el axón"], answer: 2 },
+    { topic: "Generalidades del sistema nervioso", question: "8. ¿Qué orgánulo neuronal corresponde a la sustancia de Nissl?", options: ["A) Retículo endoplasmático rugoso", "B) Aparato de Golgi", "C) Mitocondrias", "D) Lisosomas"], answer: 0 },
+    { topic: "Generalidades del sistema nervioso", question: "9. ¿Qué células gliales tienen funciones fagocíticas en respuesta a daños?", options: ["A) Astrocitos", "B) Ependimocitos", "C) Microglía", "D) Células satélite"], answer: 2 },
+    { topic: "Generalidades del sistema nervioso", question: "10. ¿Qué tipo de neurona tiene un axón y múltiples dendritas (la más común)?", options: ["A) Unipolar", "B) Bipolar", "C) Multipolar", "D) Pseudounipolar"], answer: 2 },
+
+    // --- TEMA 2: Embriogénesis ---
+    { topic: "Embriogénesis", question: "11. ¿En qué día aproximado comienza la etapa de gastrulación?", options: ["A) Día 7", "B) Día 16", "C) Día 21", "D) Día 28"], answer: 1 },
+    { topic: "Embriogénesis", question: "12. ¿Qué estructura induce al ectodermo a formar la placa neural?", options: ["A) El saco vitelino", "B) La notocorda", "C) El amnios", "D) El trofoblasto"], answer: 1 },
+    { topic: "Embriogénesis", question: "13. El proceso de formación del tubo neural se denomina:", options: ["A) Gastrulación", "B) Neurulación", "C) Implantación", "D) Segmentación"], answer: 1 },
+    { topic: "Embriogénesis", question: "14. ¿Alrededor de qué día se cierra el neuroporo anterior (rostral)?", options: ["A) Día 21", "B) Día 24", "C) Día 26", "D) Día 28"], answer: 1 },
+    { topic: "Embriogénesis", question: "15. ¿Cuál de las siguientes es una vesícula encefálica primaria?", options: ["A) Telencéfalo", "B) Metencéfalo", "C) Prosencéfalo", "D) Mielencéfalo"], answer: 2 },
+    { topic: "Embriogénesis", question: "16. El rombencéfalo da origen a las vesículas secundarias:", options: ["A) Telencéfalo y Diencéfalo", "B) Mesencéfalo y Metencéfalo", "C) Metencéfalo y Mielencéfalo", "D) Diencéfalo y Mesencéfalo"], answer: 2 },
+    { topic: "Embriogénesis", question: "17. ¿Qué defecto del tubo neural se conoce como 'mielodisplasia' y ocurre en la neurulación secundaria?", options: ["A) Anencefalia", "B) Síndrome de médula fijada", "C) Encefalocele", "D) Holoprosencefalia"], answer: 1 },
+    { topic: "Embriogénesis", question: "18. ¿De qué vesícula secundaria deriva el cerebelo?", options: ["A) Mielencéfalo", "B) Mesencéfalo", "C) Metencéfalo", "D) Diencéfalo"], answer: 2 },
+    { topic: "Embriogénesis", question: "19. ¿Qué estructura adulta deriva del diencéfalo?", options: ["A) Corteza cerebral", "B) Tálamo e hipotálamo", "C) Bulbo raquídeo", "D) Puente"], answer: 1 },
+    { topic: "Embriogénesis", question: "20. La cavidad del rombencéfalo dará lugar a:", options: ["A) Ventrículos laterales", "B) Tercer ventrículo", "C) Acueducto cerebral", "D) Cuarto ventrículo"], answer: 3 },
+
+    // --- TEMA 3: Médula Espinal ---
+    { topic: "Médula espinal", question: "21. En el desarrollo de la médula, ¿qué placa da origen a las neuronas motoras?", options: ["A) Placa alar", "B) Placa basal", "C) Placa del techo", "D) Placa del piso"], answer: 1 },
+    { topic: "Médula espinal", question: "22. ¿Qué estructura separa la placa alar de la placa basal en el desarrollo?", options: ["A) Surco medio posterior", "B) Fisura media anterior", "C) Surco limitante", "D) Conducto central"], answer: 2 },
+    { topic: "Médula espinal", question: "23. La sustancia gris de la médula espinal se origina de la:", options: ["A) Zona marginal", "B) Zona intermedia", "C) Zona ventricular", "D) Cresta neural"], answer: 1 },
+    { topic: "Médula espinal", question: "24. ¿Dónde se localizan las neuronas motoras somáticas en la médula adulta?", options: ["A) Asta dorsal", "B) Asta lateral", "C) Asta ventral (anterior)", "D) Cordón posterior"], answer: 2 },
+    { topic: "Médula espinal", question: "25. ¿Qué información ingresa principalmente por el asta dorsal?", options: ["A) Motora voluntaria", "B) Sensitiva", "C) Motora visceral", "D) Propioceptiva descendente"], answer: 1 },
+    { topic: "Médula espinal", question: "26. El conducto central de la médula espinal es el remanente de:", options: ["A) La notocorda", "B) El celoma intraembrionario", "C) La cavidad del tubo neural", "D) El saco vitelino"], answer: 2 },
+    { topic: "Médula espinal", question: "27. ¿Hasta qué nivel vertebral llega aproximadamente la médula espinal en el adulto?", options: ["A) T12", "B) L1/L2", "C) L4/L5", "D) S1"], answer: 1 },
+    { topic: "Médula espinal", question: "28. ¿Qué estructura une la punta del cono medular con el cóccix?", options: ["A) Cauda equina", "B) Ligamento dentado", "C) Filum terminal", "D) Ligamento amarillo"], answer: 2 },
+    { topic: "Médula espinal", question: "29. Las columnas intermediolaterales (asta lateral) están presentes en los segmentos:", options: ["A) Cervicales altos", "B) Torácicos y lumbares superiores (T1-L2)", "C) Solo lumbares", "D) Solo sacros"], answer: 1 },
+    { topic: "Médula espinal", question: "30. La sustancia blanca de la médula espinal está formada principalmente por:", options: ["A) Somas neuronales", "B) Axones mielinizados", "C) Células ependimarias", "D) Cuerpos de Nissl"], answer: 1 },
+
+    // --- TEMA 4: Nervios espinales ---
+    { topic: "Nervios espinales", question: "31. ¿Cuántos pares de nervios espinales existen en total?", options: ["A) 28", "B) 30", "C) 31", "D) 33"], answer: 2 },
+    { topic: "Nervios espinales", question: "32. ¿Cuántos pares de nervios cervicales hay?", options: ["A) 7", "B) 8", "C) 12", "D) 5"], answer: 1 },
+    { topic: "Nervios espinales", question: "33. La raíz ventral de un nervio espinal es funcionalmente:", options: ["A) Sensitiva", "B) Motora (eferente)", "C) Mixta", "D) Autónoma exclusivamente"], answer: 1 },
+    { topic: "Nervios espinales", question: "34. ¿Dónde se encuentra el cuerpo de la neurona sensitiva del nervio espinal?", options: ["A) Asta dorsal", "B) Asta ventral", "C) Ganglio de la raíz dorsal (ganglio espinal)", "D) Cadena simpática"], answer: 2 },
+    { topic: "Nervios espinales", question: "35. El nervio espinal C8 emerge:", options: ["A) Sobre la vértebra C7", "B) Entre C7 y T1", "C) Bajo la vértebra T1", "D) No existe el nervio C8"], answer: 1 },
+    { topic: "Nervios espinales", question: "36. ¿Qué rama del nervio espinal inerva los músculos profundos del dorso y la piel de la espalda?", options: ["A) Rama ventral", "B) Rama dorsal (posterior)", "C) Ramo comunicante gris", "D) Ramo meníngeo"], answer: 1 },
+    { topic: "Nervios espinales", question: "37. Los plexos nerviosos (cervical, braquial, lumbar, sacro) se forman por la unión de:", options: ["A) Las raíces dorsales", "B) Las raíces ventrales", "C) Las ramas (ramos) ventrales", "D) Las ramas dorsales"], answer: 2 },
+    { topic: "Nervios espinales", question: "38. ¿Qué estructura contiene los axones de las neuronas motoras somáticas?", options: ["A) Raíz dorsal", "B) Ganglio espinal", "C) Raíz ventral", "D) Ligamento dentado"], answer: 2 },
+    { topic: "Nervios espinales", question: "39. El nervio frénico se origina principalmente del plexo:", options: ["A) Cervical (C3-C5)", "B) Braquial", "C) Lumbar", "D) Sacro"], answer: 0 },
+    { topic: "Nervios espinales", question: "40. La 'cauda equina' o cola de caballo está formada por:", options: ["A) La médula espinal sacra", "B) Raíces nerviosas lumbares y sacras dentro del saco dural", "C) El filum terminal externo", "D) Los ganglios simpáticos"], answer: 1 },
+
+    // --- TEMA 5: Meninges espinales ---
+    { topic: "Meninges espinales", question: "41. ¿Cuál es la capa meníngea más externa?", options: ["A) Aracnoides", "B) Piamadre", "C) Duramadre", "D) Ependimo"], answer: 2 },
+    { topic: "Meninges espinales", question: "42. El espacio epidural espinal se encuentra entre:", options: ["A) Duramadre y Aracnoides", "B) Aracnoides y Piamadre", "C) Duramadre y el periostio del conducto vertebral", "D) Piamadre y Médula"], answer: 2 },
+    { topic: "Meninges espinales", question: "43. ¿Qué contenido encontramos en el espacio subaracnoideo?", options: ["A) Grasa y plexos venosos", "B) Líquido cerebroespinal (LCE)", "C) Solo trabéculas", "D) Sangre venosa"], answer: 1 },
+    { topic: "Meninges espinales", question: "44. Los ligamentos dentados son proyecciones de:", options: ["A) La duramadre", "B) La aracnoides", "C) La piamadre", "D) El periostio"], answer: 2 },
+    { topic: "Meninges espinales", question: "45. La cisterna lumbar (lugar de punción lumbar) se encuentra aproximadamente entre:", options: ["A) T12 y L1", "B) L1 y S2", "C) S2 y Coxis", "D) C1 y C2"], answer: 1 },
+    { topic: "Meninges espinales", question: "46. ¿Hasta qué nivel vertebral se extiende el saco dural?", options: ["A) L1", "B) L5", "C) S2", "D) Coxis"], answer: 2 },
+    { topic: "Meninges espinales", question: "47. El espacio subdural es un espacio potencial ubicado entre:", options: ["A) Duramadre y Aracnoides", "B) Aracnoides y Piamadre", "C) Hueso y Duramadre", "D) Piamadre y tejido nervioso"], answer: 0 },
+    { topic: "Meninges espinales", question: "48. La piamadre espinal se continúa inferiormente como un filamento delgado llamado:", options: ["A) Ligamento dentado", "B) Filum terminal", "C) Cauda equina", "D) Cono medular"], answer: 1 },
+    { topic: "Meninges espinales", question: "49. ¿Qué capa meníngea es vascular y está adherida íntimamente al tejido nervioso?", options: ["A) Duramadre", "B) Aracnoides", "C) Piamadre", "D) Epineuro"], answer: 2 },
+    { topic: "Meninges espinales", question: "50. El espacio epidural contiene principalmente:", options: ["A) Líquido cefalorraquídeo", "B) Tejido adiposo y plexos venosos vertebrales internos", "C) Arterias espinales", "D) Ligamentos dentados"], answer: 1 },
+
+    // --- TEMA 6: Tronco encefálico ---
+    { topic: "Tronco encefálico", question: "51. ¿Cuáles son las tres partes del tronco encefálico de superior a inferior?", options: ["A) Puente, Mesencéfalo, Bulbo", "B) Mesencéfalo, Puente, Bulbo", "C) Bulbo, Puente, Mesencéfalo", "D) Cerebelo, Puente, Bulbo"], answer: 1 },
+    { topic: "Tronco encefálico", question: "52. La decusación de las pirámides se encuentra en:", options: ["A) El mesencéfalo", "B) El puente", "C) El bulbo raquídeo", "D) El diencéfalo"], answer: 2 },
+    { topic: "Tronco encefálico", question: "53. ¿Qué nervio craneal tiene su origen aparente en la fosa interpeduncular del mesencéfalo?", options: ["A) Nervio troclear (IV)", "B) Nervio oculomotor (III)", "C) Nervio trigémino (V)", "D) Nervio abducens (VI)"], answer: 1 },
+    { topic: "Tronco encefálico", question: "54. La fosa romboidea corresponde al suelo del:", options: ["A) Tercer ventrículo", "B) Ventrículo lateral", "C) Cuarto ventrículo", "D) Acueducto cerebral"], answer: 2 },
+    { topic: "Tronco encefálico", question: "55. ¿Qué estructura se encuentra en la cara posterior del mesencéfalo?", options: ["A) Pirámides", "B) Olivas", "C) Colículos (cuadrigéminos) superiores e inferiores", "D) Pedúnculos cerebrales"], answer: 2 },
+    { topic: "Tronco encefálico", question: "56. El nervio trigémino (V) emerge de la cara lateral de:", options: ["A) El bulbo", "B) El puente", "C) El mesencéfalo", "D) La médula espinal"], answer: 1 },
+    { topic: "Tronco encefálico", question: "57. ¿Qué nervio craneal emerge de la cara posterior del tronco encefálico?", options: ["A) III (Oculomotor)", "B) IV (Troclear)", "C) VI (Abducens)", "D) VII (Facial)"], answer: 1 },
+    { topic: "Tronco encefálico", question: "58. Los pedúnculos cerebrales forman la porción anterior de:", options: ["A) El bulbo", "B) El puente", "C) El mesencéfalo", "D) El diencéfalo"], answer: 2 },
+    { topic: "Tronco encefálico", question: "59. El surco bulbopontino es el origen aparente de los nervios:", options: ["A) III y IV", "B) V", "C) VI, VII y VIII", "D) IX, X y XI"], answer: 2 },
+    { topic: "Tronco encefálico", question: "60. El núcleo grácil y cuneiforme se observan como tubérculos en la cara posterior de:", options: ["A) El mesencéfalo", "B) El puente", "C) El bulbo raquídeo", "D) El tálamo"], answer: 2 },
+
+    // --- TEMA 7: Cerebelo ---
+    { topic: "Cerebelo", question: "61. El cerebelo se une al tronco encefálico mediante:", options: ["A) Los colículos", "B) Los pedúnculos cerebrales", "C) Los pedúnculos cerebelosos", "D) Las pirámides"], answer: 2 },
+    { topic: "Cerebelo", question: "62. ¿Qué pedúnculo cerebeloso conecta el cerebelo con el mesencéfalo?", options: ["A) Superior", "B) Medio", "C) Inferior", "D) Lateral"], answer: 0 },
+    { topic: "Cerebelo", question: "63. ¿Qué pedúnculo cerebeloso conecta el cerebelo con el puente?", options: ["A) Superior", "B) Medio", "C) Inferior", "D) Lateral"], answer: 1 },
+    { topic: "Cerebelo", question: "64. ¿Qué pedúnculo cerebeloso conecta el cerebelo con el bulbo raquídeo?", options: ["A) Superior", "B) Medio", "C) Inferior", "D) Lateral"], answer: 2 },
+    { topic: "Cerebelo", question: "65. El techo del cuarto ventrículo está formado en parte por:", options: ["A) El cuerpo calloso", "B) Los velos medulares superior e inferior y el cerebelo", "C) El tálamo", "D) El fórnix"], answer: 1 },
+    { topic: "Cerebelo", question: "66. Una función principal del cerebelo es:", options: ["A) Controlar la frecuencia cardíaca", "B) Coordinación motora y equilibrio", "C) Percepción del dolor", "D) Regulación hormonal"], answer: 1 },
+    { topic: "Cerebelo", question: "67. La estructura medial del cerebelo que une los dos hemisferios se llama:", options: ["A) Vermis", "B) Tonsila", "C) Flóculo", "D) Nódulo"], answer: 0 },
+    { topic: "Cerebelo", question: "68. El núcleo dentado se encuentra en:", options: ["A) El bulbo", "B) El puente", "C) El interior del cerebelo", "D) El mesencéfalo"], answer: 2 },
+    { topic: "Cerebelo", question: "69. ¿Qué estructura separa el cerebelo de los lóbulos occipitales del cerebro?", options: ["A) La hoz del cerebro", "B) La tienda del cerebelo (tentorio)", "C) El diafragma selar", "D) La hoz del cerebelo"], answer: 1 },
+    { topic: "Cerebelo", question: "70. El lóbulo floculonodular está relacionado funcionalmente con:", options: ["A) La planificación motora", "B) El equilibrio (vestibulocerebelo)", "C) El tono muscular", "D) La audición"], answer: 1 },
+
+    // --- TEMA 8: Origen aparente ---
+    { topic: "Origen aparente", question: "71. El origen aparente del nervio hipogloso (XII) es:", options: ["A) Surco bulbopontino", "B) Surco preolivar", "C) Surco retroolivar", "D) Fosa interpeduncular"], answer: 1 },
+    { topic: "Origen aparente", question: "72. Los nervios IX, X y XI tienen su origen aparente en:", options: ["A) Surco preolivar", "B) Surco retroolivar", "C) Surco bulbopontino", "D) Cara lateral del puente"], answer: 1 },
+    { topic: "Origen aparente", question: "73. El origen aparente del nervio abducens (VI) es:", options: ["A) Surco bulbopontino, superior a las pirámides", "B) Fosa interpeduncular", "C) Cara lateral del puente", "D) Surco retroolivar"], answer: 0 },
+    { topic: "Origen aparente", question: "74. El origen aparente del nervio facial (VII) es:", options: ["A) Surco bulbopontino, lateral al VI", "B) Surco preolivar", "C) Mesencéfalo posterior", "D) Puente lateral"], answer: 0 },
+    { topic: "Origen aparente", question: "75. El origen aparente del nervio vestibulococlear (VIII) es:", options: ["A) Fosa interpeduncular", "B) Surco bulbopontino, lateral al VII", "C) Surco retroolivar", "D) Cara lateral del puente"], answer: 1 },
+    { topic: "Origen aparente", question: "76. El origen aparente del nervio olfatorio (I) se considera:", options: ["A) Bulbo olfatorio", "B) Quiasma óptico", "C) Tallo encefálico", "D) No tiene origen en el tronco, llega al bulbo olfatorio"], answer: 3 },
+    { topic: "Origen aparente", question: "77. El nervio óptico (II) se asocia con:", options: ["A) Mesencéfalo", "B) Quiasma óptico y tractos ópticos (Diencéfalo)", "C) Puente", "D) Bulbo"], answer: 1 },
+    { topic: "Origen aparente", question: "78. El origen aparente del nervio trigémino (V) es:", options: ["A) Cara anterolateral del puente", "B) Surco bulbopontino", "C) Mesencéfalo anterior", "D) Surco preolivar"], answer: 0 },
+    { topic: "Origen aparente", question: "79. El nervio accesorio (XI) tiene una raíz craneal y una raíz:", options: ["A) Pontina", "B) Espinal", "C) Mesencefálica", "D) Cerebelosa"], answer: 1 },
+    { topic: "Origen aparente", question: "80. ¿Qué nervio emerge por la cara dorsal (posterior) del mesencéfalo?", options: ["A) III", "B) IV", "C) V", "D) VI"], answer: 1 },
+
+    // --- TEMA 9: Calidad funcional de nervios craneales ---
+    { topic: "Calidad funcional de nervios craneales", question: "81. El nervio oculomotor (III) tiene función:", options: ["A) Solo motora somática", "B) Motora somática y motora visceral (parasimpática)", "C) Sensitiva pura", "D) Mixta (sensitiva y motora)"], answer: 1 },
+    { topic: "Calidad funcional de nervios craneales", question: "82. El nervio trigémino (V) es principalmente sensitivo de la cara, pero tiene una función motora para:", options: ["A) Músculos de la expresión facial", "B) Músculos de la masticación", "C) Músculos de la lengua", "D) Músculos del ojo"], answer: 1 },
+    { topic: "Calidad funcional de nervios craneales", question: "83. El nervio facial (VII) es:", options: ["A) Motor puro", "B) Sensitivo puro", "C) Mixto (motor, sensitivo y parasimpático)", "D) Simpático puro"], answer: 2 },
+    { topic: "Calidad funcional de nervios craneales", question: "84. ¿Qué nervio lleva la información visual?", options: ["A) II (Óptico)", "B) III (Oculomotor)", "C) IV (Troclear)", "D) VI (Abducens)"], answer: 0 },
+    { topic: "Calidad funcional de nervios craneales", question: "85. El nervio vago (X) tiene un componente parasimpático que inerva:", options: ["A) Solo cabeza", "B) Vísceras torácicas y abdominales", "C) Músculos de la pierna", "D) Glándula parótida únicamente"], answer: 1 },
+    { topic: "Calidad funcional de nervios craneales", question: "86. El nervio vestibulococlear (VIII) es:", options: ["A) Motor somático", "B) Sensitivo especial (audición y equilibrio)", "C) Mixto", "D) Parasimpático"], answer: 1 },
+    { topic: "Calidad funcional de nervios craneales", question: "87. El nervio hipogloso (XII) es:", options: ["A) Motor somático (músculos de la lengua)", "B) Sensitivo (gusto)", "C) Parasimpático", "D) Mixto"], answer: 0 },
+    { topic: "Calidad funcional de nervios craneales", question: "88. El nervio glosofaríngeo (IX) lleva gusto del:", options: ["A) Tercio posterior de la lengua", "B) Dos tercios anteriores de la lengua", "C) Paladar duro", "D) Esófago"], answer: 0 },
+    { topic: "Calidad funcional de nervios craneales", question: "89. La inervación parasimpática de la glándula parótida viene del nervio:", options: ["A) Facial (VII)", "B) Glosofaríngeo (IX)", "C) Vago (X)", "D) Trigémino (V)"], answer: 1 },
+    { topic: "Calidad funcional de nervios craneales", question: "90. El nervio abducens (VI) inerva al músculo:", options: ["A) Recto medial", "B) Recto lateral", "C) Oblicuo superior", "D) Recto superior"], answer: 1 },
+
+    // --- TEMA 10: Sistema nervioso autonomo ---
+    { topic: "Sistema nervioso autónomo", question: "91. El sistema simpático se denomina también división:", options: ["A) Craneosacra", "B) Toracolumbar", "C) Somática", "D) Entérica"], answer: 1 },
+    { topic: "Sistema nervioso autónomo", question: "92. El sistema parasimpático se denomina también división:", options: ["A) Craneosacra", "B) Toracolumbar", "C) Periférica", "D) Cervical"], answer: 0 },
+    { topic: "Sistema nervioso autónomo", question: "93. ¿Dónde se encuentra la primera neurona (preganglionar) del sistema simpático?", options: ["A) Ganglio de la raíz dorsal", "B) Asta lateral de la médula (T1-L2)", "C) Tronco encefálico", "D) Ganglio paravertebral"], answer: 1 },
+    { topic: "Sistema nervioso autónomo", question: "94. ¿Qué neurotransmisor liberan las fibras preganglionares simpáticas y parasimpáticas?", options: ["A) Noradrenalina", "B) Acetilcolina", "C) Dopamina", "D) Adrenalina"], answer: 1 },
+    { topic: "Sistema nervioso autónomo", question: "95. ¿Qué neurotransmisor libera la mayoría de las fibras posganglionares simpáticas?", options: ["A) Acetilcolina", "B) Noradrenalina", "C) Serotonina", "D) GABA"], answer: 1 },
+    { topic: "Sistema nervioso autónomo", question: "96. El nervio vago (X) transporta fibras parasimpáticas para:", options: ["A) La pupila", "B) Glándulas salivales sublinguales", "C) Corazón, pulmones y tubo digestivo", "D) Órganos pélvicos"], answer: 2 },
+    { topic: "Sistema nervioso autónomo", question: "97. La dilatación pupilar (midriasis) es un efecto del sistema:", options: ["A) Parasimpático", "B) Simpático", "C) Somático", "D) Entérico"], answer: 1 },
+    { topic: "Sistema nervioso autónomo", question: "98. Los nervios esplácnicos pélvicos llevan fibras:", options: ["A) Simpáticas preganglionares", "B) Parasimpáticas preganglionares (S2-S4)", "C) Somáticas motoras", "D) Sensitivas puras"], answer: 1 },
+    { topic: "Sistema nervioso autónomo", question: "99. Los ganglios paravertebrales forman:", options: ["A) La cadena simpática", "B) Los plexos prevertebrales", "C) Los ganglios de la raíz dorsal", "D) Los ganglios basales"], answer: 0 },
+    { topic: "Sistema nervioso autónomo", question: "100. ¿Qué efecto tiene el parasimpático sobre el corazón?", options: ["A) Aumenta la frecuencia cardiaca", "B) Disminuye la frecuencia cardiaca (bradicardia)", "C) Aumenta la fuerza de contracción", "D) No tiene efecto"], answer: 1 },
+
+    // --- TEMA 11: Cerebro ---
+    { topic: "Cerebro", question: "101. ¿Qué estructura conecta los dos hemisferios cerebrales?", options: ["A) Fórnix", "B) Cuerpo calloso", "C) Septo pelúcido", "D) Cápsula interna"], answer: 1 },
+    { topic: "Cerebro", question: "102. El diencéfalo está compuesto principalmente por:", options: ["A) Puente y bulbo", "B) Tálamo e hipotálamo", "C) Núcleo caudado y putamen", "D) Corteza cerebral"], answer: 1 },
+    { topic: "Cerebro", question: "103. ¿Qué lóbulo cerebral se encarga principalmente de la función motora voluntaria?", options: ["A) Parietal", "B) Occipital", "C) Frontal", "D) Temporal"], answer: 2 },
+    { topic: "Cerebro", question: "104. ¿Qué lóbulo contiene la corteza visual primaria?", options: ["A) Frontal", "B) Parietal", "C) Occipital", "D) Temporal"], answer: 2 },
+    { topic: "Cerebro", question: "105. El hipocampo es una estructura relacionada con:", options: ["A) El control motor fino", "B) La memoria y aprendizaje", "C) La visión", "D) La audición"], answer: 1 },
+    { topic: "Cerebro", question: "106. ¿Qué núcleos forman el cuerpo estriado?", options: ["A) Caudado y Lenticular", "B) Tálamo y Subtálamo", "C) Rojo y Negra", "D) Amígdala e Hipocampo"], answer: 0 },
+    { topic: "Cerebro", question: "107. El núcleo lenticular está formado por:", options: ["A) Caudado y Putamen", "B) Putamen y Globo pálido", "C) Claustro y Amígdala", "D) Tálamo y Putamen"], answer: 1 },
+    { topic: "Cerebro", question: "108. La cápsula interna es:", options: ["A) Sustancia gris", "B) Sustancia blanca (fibras de proyección)", "C) Un ventrículo", "D) Un núcleo basal"], answer: 1 },
+    { topic: "Cerebro", question: "109. ¿Qué estructura secreta melatonina y pertenece al epitálamo?", options: ["A) Hipófisis", "B) Glándula pineal", "C) Habénula", "D) Tálamo"], answer: 1 },
+    { topic: "Cerebro", question: "110. El fórnix conecta principalmente:", options: ["A) El hipocampo con el hipotálamo (cuerpos mamilares)", "B) El tálamo con la corteza", "C) Los dos hemisferios", "D) El cerebelo con el puente"], answer: 0 },
+
+    // --- TEMA 12: Configuración externa (Cerebro) ---
+    { topic: "Configuración externa (Cerebro)", question: "111. El surco que separa el lóbulo frontal del parietal se llama:", options: ["A) Surco lateral (Silvio)", "B) Surco central (Rolando)", "C) Surco calcarino", "D) Surco parietooccipital"], answer: 1 },
+    { topic: "Configuración externa (Cerebro)", question: "112. El surco lateral (de Silvio) separa el lóbulo temporal de:", options: ["A) Frontal y Parietal", "B) Occipital", "C) Ínsula solamente", "D) Cuerpo calloso"], answer: 0 },
+    { topic: "Configuración externa (Cerebro)", question: "113. El giro precentral corresponde funcionalmente a:", options: ["A) Corteza somatosensorial primaria", "B) Corteza motora primaria", "C) Corteza visual", "D) Corteza auditiva"], answer: 1 },
+    { topic: "Configuración externa (Cerebro)", question: "114. El giro poscentral corresponde funcionalmente a:", options: ["A) Corteza motora", "B) Corteza somatosensorial primaria", "C) Área de Broca", "D) Área de Wernicke"], answer: 1 },
+    { topic: "Configuración externa (Cerebro)", question: "115. El lóbulo de la ínsula se encuentra en la profundidad del:", options: ["A) Surco central", "B) Surco lateral", "C) Surco calcarino", "D) Surco del cíngulo"], answer: 1 },
+    { topic: "Configuración externa (Cerebro)", question: "116. En la cara medial, el surco calcarino se ubica en el lóbulo:", options: ["A) Frontal", "B) Parietal", "C) Occipital", "D) Temporal"], answer: 2 },
+    { topic: "Configuración externa (Cerebro)", question: "117. El giro del cíngulo se encuentra:", options: ["A) Sobre el cuerpo calloso, en la cara medial", "B) En la cara lateral del lóbulo temporal", "C) En el polo frontal", "D) En la base del cerebro"], answer: 0 },
+    { topic: "Configuración externa (Cerebro)", question: "118. ¿Qué surco separa los dos hemisferios cerebrales?", options: ["A) Surco central", "B) Fisura longitudinal", "C) Surco lateral", "D) Surco transverso"], answer: 1 },
+    { topic: "Configuración externa (Cerebro)", question: "119. El uncus es una estructura perteneciente al lóbulo:", options: ["A) Frontal", "B) Parietal", "C) Temporal", "D) Occipital"], answer: 2 },
+    { topic: "Configuración externa (Cerebro)", question: "120. El giro recto se encuentra en la cara:", options: ["A) Lateral", "B) Medial", "C) Inferior (orbitaria) del lóbulo frontal", "D) Superior"], answer: 2 },
+
+    // --- TEMA 13: Meninges craneales ---
+    { topic: "Meninges craneales", question: "121. La hoz del cerebro es una dependencia de:", options: ["A) La piamadre", "B) La aracnoides", "C) La duramadre", "D) El hueso"], answer: 2 },
+    { topic: "Meninges craneales", question: "122. El tentorio (tienda del cerebelo) separa:", options: ["A) Los dos hemisferios cerebrales", "B) El cerebro del cerebelo", "C) El bulbo del puente", "D) Los dos hemisferios cerebelosos"], answer: 1 },
+    { topic: "Meninges craneales", question: "123. ¿Dónde se localizan los senos venosos durales?", options: ["A) En el espacio epidural", "B) Entre las capas perióstica y meníngea de la duramadre", "C) En el espacio subaracnoideo", "D) Bajo la piamadre"], answer: 1 },
+    { topic: "Meninges craneales", question: "124. El seno sagital superior discurre por el borde superior de:", options: ["A) La hoz del cerebro", "B) La tienda del cerebelo", "C) La hoz del cerebelo", "D) El diafragma selar"], answer: 0 },
+    { topic: "Meninges craneales", question: "125. Las granulaciones aracnoideas permiten:", options: ["A) La producción de LCE", "B) El drenaje de LCE hacia los senos venosos", "C) La entrada de sangre al cerebro", "D) La secreción de hormonas"], answer: 1 },
+    { topic: "Meninges craneales", question: "126. El espacio entre el cráneo y la duramadre (patológico en cráneo) se llama:", options: ["A) Subdural", "B) Epidural", "C) Subaracnoideo", "D) Ventricular"], answer: 1 },
+    { topic: "Meninges craneales", question: "127. ¿Qué arteria meníngea es la más importante y susceptible a ruptura (hematoma epidural)?", options: ["A) Arteria meníngea media", "B) Arteria meníngea anterior", "C) Arteria meníngea posterior", "D) Arteria cerebral media"], answer: 0 },
+    { topic: "Meninges craneales", question: "128. El diafragma selar cubre:", options: ["A) La silla turca (hipófisis)", "B) El foramen magno", "C) La lámina cribosa", "D) El seno cavernoso"], answer: 0 },
+    { topic: "Meninges craneales", question: "129. La piamadre y la aracnoides juntas se denominan:", options: ["A) Paquimeninges", "B) Leptomeninges", "C) Duramadre", "D) Ependimo"], answer: 1 },
+    { topic: "Meninges craneales", question: "130. La hoz del cerebelo separa:", options: ["A) Los lóbulos occipitales", "B) Los hemisferios cerebelosos", "C) El cerebro del tronco", "D) El puente del bulbo"], answer: 1 },
+
+    // --- TEMA 14: Líquido cerebroespinal (LCE) ---
+    { topic: "Líquido cerebroespinal", question: "131. ¿Dónde se produce mayoritariamente el LCE?", options: ["A) Granulaciones aracnoideas", "B) Plexos coroideos", "C) Senos venosos", "D) Acueducto cerebral"], answer: 1 },
+    { topic: "Líquido cerebroespinal", question: "132. ¿Dónde se ubican los plexos coroideos?", options: ["A) Solo en el IV ventrículo", "B) En los ventrículos laterales, III y IV ventrículo", "C) En el espacio subaracnoideo", "D) En la cisterna magna"], answer: 1 },
+    { topic: "Líquido cerebroespinal", question: "133. El agujero interventricular (de Monro) comunica:", options: ["A) III y IV ventrículo", "B) Ventrículos laterales con el III ventrículo", "C) IV ventrículo con espacio subaracnoideo", "D) Ventrículos laterales entre sí"], answer: 1 },
+    { topic: "Líquido cerebroespinal", question: "134. El acueducto cerebral (de Silvio) comunica:", options: ["A) Ventrículos laterales y III", "B) III y IV ventrículo", "C) IV ventrículo y médula", "D) Cisterna magna y pontina"], answer: 1 },
+    { topic: "Líquido cerebroespinal", question: "135. El LCE sale del sistema ventricular al espacio subaracnoideo por los agujeros de:", options: ["A) Monro", "B) Silvio", "C) Magendie y Luschka", "D) Oval y Redondo"], answer: 2 },
+    { topic: "Líquido cerebroespinal", question: "136. ¿Dónde se reabsorbe el LCE hacia la sangre venosa?", options: ["A) Plexos coroideos", "B) Granulaciones aracnoideas (vellosidades)", "C) Acueducto", "D) Conducto central"], answer: 1 },
+    { topic: "Líquido cerebroespinal", question: "137. La cisterna magna (cerebelomedular posterior) se ubica:", options: ["A) Entre el cerebelo y el bulbo raquídeo", "B) Delante del puente", "C) Sobre el cuerpo calloso", "D) Entre los pedúnculos cerebrales"], answer: 0 },
+    { topic: "Líquido cerebroespinal", question: "138. ¿Cuál es una función del LCE?", options: ["A) Producir impulsos nerviosos", "B) Amortiguar y proteger el encéfalo", "C) Oxigenar directamente las neuronas", "D) Conectar los hemisferios"], answer: 1 },
+    { topic: "Líquido cerebroespinal", question: "139. La cisterna lumbar es importante clínicamente para:", options: ["A) La punción lumbar", "B) La cirugía de hipófisis", "C) Drenar hematomas", "D) Medir la visión"], answer: 0 },
+    { topic: "Líquido cerebroespinal", question: "140. El volumen total aproximado de LCE en el adulto es:", options: ["A) 10-20 ml", "B) 100-150 ml", "C) 500 ml", "D) 1 litro"], answer: 1 },
+
+    // --- TEMA 15: Irrigación ---
+    { topic: "Irrigación", question: "141. ¿Cuáles son las dos arterias principales que irrigan el encéfalo?", options: ["A) Carótida externa y vertebral", "B) Carótida interna y vertebral", "C) Subclavia y yugular", "D) Facial y maxilar"], answer: 1 },
+    { topic: "Irrigación", question: "142. Las arterias vertebrales se unen para formar:", options: ["A) La arteria carótida interna", "B) La arteria basilar", "C) La arteria cerebral media", "D) El polígono de Willis"], answer: 1 },
+    { topic: "Irrigación", question: "143. La arteria cerebral media es rama terminal de:", options: ["A) Arteria basilar", "B) Arteria vertebral", "C) Arteria carótida interna", "D) Arteria carótida externa"], answer: 2 },
+    { topic: "Irrigación", question: "144. ¿Qué arteria irriga la mayor parte de la cara lateral del cerebro?", options: ["A) Cerebral anterior", "B) Cerebral media", "C) Cerebral posterior", "D) Comunicante anterior"], answer: 1 },
+    { topic: "Irrigación", question: "145. La arteria cerebral posterior es rama terminal de:", options: ["A) Carótida interna", "B) Basilar", "C) Vertebral", "D) Comunicante posterior"], answer: 1 },
+    { topic: "Irrigación", question: "146. El polígono de Willis (círculo arterial cerebral) permite:", options: ["A) La comunicación entre los sistemas carotídeo y vertebrobasilar", "B) El drenaje venoso", "C) La producción de LCE", "D) La irrigación de la cara"], answer: 0 },
+    { topic: "Irrigación", question: "147. La arteria cerebral anterior irriga principalmente:", options: ["A) La cara lateral del cerebro", "B) La cara medial del cerebro y borde superior", "C) El lóbulo occipital", "D) El tronco encefálico"], answer: 1 },
+    { topic: "Irrigación", question: "148. La arteria oftálmica es rama de:", options: ["A) Carótida externa", "B) Carótida interna", "C) Basilar", "D) Facial"], answer: 1 },
+    { topic: "Irrigación", question: "149. ¿Qué arteria irriga el lóbulo occipital (corteza visual)?", options: ["A) Cerebral anterior", "B) Cerebral media", "C) Cerebral posterior", "D) Coroidea anterior"], answer: 2 },
+    { topic: "Irrigación", question: "150. La arteria cerebelosa posteroinferior (PICA) suele nacer de:", options: ["A) Arteria basilar", "B) Arteria vertebral", "C) Arteria carótida interna", "D) Arteria cerebral posterior"], answer: 1 },
+
+    // --- TEMA 16: Órganos de los sentidos (Generalidades) ---
+    { topic: "Órganos de los sentidos", question: "151. ¿Qué proceso convierte la energía del estímulo en impulso nervioso?", options: ["A) Transmisión", "B) Transducción", "C) Percepción", "D) Modulación"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "152. ¿Cuáles son los sentidos especiales?", options: ["A) Dolor, temperatura, tacto", "B) Visión, audición, equilibrio, gusto, olfato", "C) Propiocepción y vibración", "D) Hambre y sed"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "153. ¿Qué par craneal lleva la información del olfato?", options: ["A) I", "B) II", "C) V", "D) VII"], answer: 0 },
+    { topic: "Órganos de los sentidos", question: "154. ¿Qué par craneal lleva la información visual?", options: ["A) I", "B) II", "C) III", "D) IV"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "155. ¿Qué par craneal lleva la información auditiva y vestibular?", options: ["A) VII", "B) VIII", "C) IX", "D) X"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "156. El gusto es transportado principalmente por los nervios:", options: ["A) V y VII", "B) VII y IX", "C) IX y X solamente", "D) I y V"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "157. Los receptores de la visión son:", options: ["A) Células ciliadas", "B) Conos y bastones", "C) Corpúsculos de Pacini", "D) Botones gustativos"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "158. Los receptores de la audición son:", options: ["A) Células ciliadas en la cóclea", "B) Otolitos", "C) Conos", "D) Corpúsculos de Meissner"], answer: 0 },
+    { topic: "Órganos de los sentidos", question: "159. ¿Dónde se ubican los receptores del equilibrio?", options: ["A) Cóclea", "B) Vestíbulo y conductos semicirculares", "C) Oído medio", "D) Tímpano"], answer: 1 },
+    { topic: "Órganos de los sentidos", question: "160. El sentido del tacto es un sentido:", options: ["A) Especial", "B) Somático general", "C) Visceral", "D) Químico"], answer: 1 },
+
+    // --- TEMA 17: Piel ---
+    { topic: "Piel", question: "161. ¿Qué estructura de la piel recibe inervación simpática para la piloerección?", options: ["A) Glándula sebácea", "B) Músculo erector del pelo", "C) Folículo piloso", "D) Epidermis"], answer: 1 },
+    { topic: "Piel", question: "162. La inervación de las glándulas sudoríparas es:", options: ["A) Simpática colinérgica", "B) Simpática adrenérgica", "C) Parasimpática", "D) Somática"], answer: 0 },
+    { topic: "Piel", question: "163. La vasoconstricción de los vasos cutáneos es mediada por:", options: ["A) Sistema parasimpático", "B) Sistema simpático", "C) Nervios somáticos", "D) Hormonas locales solamente"], answer: 1 },
+    { topic: "Piel", question: "164. ¿Qué corpúsculo detecta presión profunda y vibración?", options: ["A) Meissner", "B) Pacini", "C) Merkel", "D) Terminaciones libres"], answer: 1 },
+    { topic: "Piel", question: "165. Las terminaciones nerviosas libres en la piel detectan principalmente:", options: ["A) Vibración", "B) Dolor y temperatura", "C) Presión fina", "D) Estiramiento"], answer: 1 },
+    { topic: "Piel", question: "166. La dermis contiene:", options: ["A) Solo células muertas", "B) Vasos sanguíneos, nervios y glándulas", "C) Solo tejido adiposo", "D) Melanocitos exclusivamente"], answer: 1 },
+    { topic: "Piel", question: "167. ¿Qué capa de la piel es avascular?", options: ["A) Dermis", "B) Epidermis", "C) Hipodermis", "D) Subcutáneo"], answer: 1 },
+    { topic: "Piel", question: "168. La inervación sensitiva de la piel de la cara proviene principalmente del nervio:", options: ["A) Facial (VII)", "B) Trigémino (V)", "C) Oculomotor (III)", "D) Vago (X)"], answer: 1 },
+    { topic: "Piel", question: "169. Los dermatomas son:", options: ["A) Áreas de piel inervadas por un solo nervio espinal", "B) Áreas musculares", "C) Glándulas cutáneas", "D) Zonas de la corteza cerebral"], answer: 0 },
+    { topic: "Piel", question: "170. Las glándulas lagrimales (anexos) reciben inervación secretomotora (parasimpática) del nervio:", options: ["A) Oculomotor", "B) Facial (VII)", "C) Trigémino", "D) Glosofaríngeo"], answer: 1 },
+
+    // --- TEMA 18: Visión (II, III, IV, VI) ---
+    { topic: "Visión (II, III, IV, VI)", question: "171. La capa nerviosa del ojo es:", options: ["A) Esclerótica", "B) Coroides", "C) Retina", "D) Córnea"], answer: 2 },
+    { topic: "Visión (II, III, IV, VI)", question: "172. ¿Qué nervio inerva al músculo recto lateral del ojo?", options: ["A) III (Oculomotor)", "B) IV (Troclear)", "C) VI (Abducens)", "D) V (Trigémino)"], answer: 2 },
+    { topic: "Visión (II, III, IV, VI)", question: "173. ¿Qué nervio inerva al músculo oblicuo superior?", options: ["A) III", "B) IV (Troclear)", "C) VI", "D) II"], answer: 1 },
+    { topic: "Visión (II, III, IV, VI)", question: "174. El nervio oculomotor (III) inerva:", options: ["A) Recto lateral y oblicuo superior", "B) Todos los músculos extraoculares excepto recto lateral y oblicuo superior", "C) Solo el elevador del párpado", "D) El músculo dilatador de la pupila"], answer: 1 },
+    { topic: "Visión (II, III, IV, VI)", question: "175. La contracción de la pupila (miosis) es función del:", options: ["A) Simpático", "B) Parasimpático (NC III)", "C) Somático", "D) Nervio troclear"], answer: 1 },
+    { topic: "Visión (II, III, IV, VI)", question: "176. El punto ciego de la retina corresponde a:", options: ["A) La fóvea", "B) La mácula", "C) El disco óptico (papila)", "D) La ora serrata"], answer: 2 },
+    { topic: "Visión (II, III, IV, VI)", question: "177. La estructura transparente que cambia de forma para la acomodación es:", options: ["A) Córnea", "B) Cristalino (Lente)", "C) Humor vítreo", "D) Iris"], answer: 1 },
+    { topic: "Visión (II, III, IV, VI)", question: "178. El humor acuoso se produce en:", options: ["A) La córnea", "B) Los procesos ciliares (Cuerpo ciliar)", "C) La retina", "D) El cristalino"], answer: 1 },
+    { topic: "Visión (II, III, IV, VI)", question: "179. ¿Dónde se cruzan las fibras nasales de la retina?", options: ["A) Nervio óptico", "B) Quiasma óptico", "C) Tracto óptico", "D) Cuerpo geniculado"], answer: 1 },
+    { topic: "Visión (II, III, IV, VI)", question: "180. La capa vascular media del ojo se llama:", options: ["A) Retina", "B) Úvea (Coroides, cuerpo ciliar, iris)", "C) Esclera", "D) Conjuntiva"], answer: 1 },
+
+    // --- TEMA 19: Gusto ---
+    { topic: "Gusto", question: "181. ¿Qué nervio recoge el gusto de los 2/3 anteriores de la lengua?", options: ["A) Lingual (V3)", "B) Cuerda del tímpano (VII)", "C) Glosofaríngeo (IX)", "D) Vago (X)"], answer: 1 },
+    { topic: "Gusto", question: "182. ¿Qué nervio recoge el gusto del 1/3 posterior de la lengua y las papilas caliciformes?", options: ["A) Facial", "B) Glosofaríngeo (IX)", "C) Vago", "D) Hipogloso"], answer: 1 },
+    { topic: "Gusto", question: "183. ¿Qué papilas linguales forman la V lingual?", options: ["A) Filiformes", "B) Fungiformes", "C) Caliciformes (circunvaladas)", "D) Foliadas"], answer: 2 },
+    { topic: "Gusto", question: "184. ¿Qué papilas son las más numerosas y NO tienen corpúsculos gustativos (función táctil)?", options: ["A) Caliciformes", "B) Foliadas", "C) Fungiformes", "D) Filiformes"], answer: 3 },
+    { topic: "Gusto", question: "185. La inervación motora de la lengua está dada por el nervio:", options: ["A) Lingual", "B) Facial", "C) Glosofaríngeo", "D) Hipogloso (XII)"], answer: 3 },
+    { topic: "Gusto", question: "186. La sensibilidad general (tacto, dolor) de los 2/3 anteriores de la lengua es por el nervio:", options: ["A) Lingual (V3)", "B) Facial", "C) Glosofaríngeo", "D) Hipogloso"], answer: 0 },
+    { topic: "Gusto", question: "187. El músculo geniogloso permite:", options: ["A) Retraer la lengua", "B) Protruir (sacar) la lengua", "C) Elevar la lengua", "D) Enrollar la lengua"], answer: 1 },
+    { topic: "Gusto", question: "188. ¿Qué músculo extrínseco de la lengua es inervado por el nervio vago (plexo faríngeo)?", options: ["A) Geniogloso", "B) Hiogloso", "C) Estilogloso", "D) Palatogloso"], answer: 3 },
+    { topic: "Gusto", question: "189. Las papilas foliadas se ubican en:", options: ["A) La punta de la lengua", "B) Los bordes laterales posteriores", "C) El centro del dorso", "D) La base de la lengua solamente"], answer: 1 },
+    { topic: "Gusto", question: "190. El foramen ciego de la lengua se ubica:", options: ["A) En la punta", "B) En el vértice de la V lingual", "C) Debajo de la lengua", "D) En los bordes"], answer: 1 },
+
+    // --- TEMA 20: Olfato (I) ---
+    { topic: "Olfato", question: "191. Las neuronas receptoras del olfato se ubican en:", options: ["A) El bulbo olfatorio", "B) La mucosa olfatoria (techo de la cavidad nasal)", "C) El tracto olfatorio", "D) El tálamo"], answer: 1 },
+    { topic: "Olfato", question: "192. Los axones de las células olfatorias atraviesan:", options: ["A) El conducto óptico", "B) La lámina cribosa del etmoides", "C) La fisura orbitaria superior", "D) El foramen redondo"], answer: 1 },
+    { topic: "Olfato", question: "193. ¿Dónde hacen sinapsis las neuronas olfatorias de primer orden?", options: ["A) En el tálamo", "B) En el bulbo olfatorio (glomérulos)", "C) En la corteza cerebral directamente", "D) En el tronco encefálico"], answer: 1 },
+    { topic: "Olfato", question: "194. El tracto olfatorio se divide posteriormente en:", options: ["A) Estrías olfatorias medial y lateral", "B) Nervios olfatorios", "C) Cintilla óptica", "D) Quiasma"], answer: 0 },
+    { topic: "Olfato", question: "195. El área piriforme y la amígdala son partes de:", options: ["A) La corteza visual", "B) La corteza olfatoria primaria", "C) La corteza motora", "D) El cerebelo"], answer: 1 },
+    { topic: "Olfato", question: "196. El sentido del olfato es único porque:", options: ["A) No pasa obligatoriamente por el tálamo antes de llegar a la corteza", "B) Es solo motor", "C) No tiene receptores", "D) Se cruza completamente"], answer: 0 },
+    { topic: "Olfato", question: "197. Las células mitrales se encuentran en:", options: ["A) La mucosa nasal", "B) El bulbo olfatorio", "C) El tracto olfatorio", "D) La corteza entorrinal"], answer: 1 },
+    { topic: "Olfato", question: "198. La mucosa respiratoria (roja) se diferencia de la olfatoria (amarilla) porque:", options: ["A) La respiratoria está en el techo y la olfatoria en el piso", "B) La olfatoria está en el techo y cornete superior", "C) Son iguales", "D) La olfatoria no tiene cilios"], answer: 1 },
+    { topic: "Olfato", question: "199. ¿Qué nervio inerva las glándulas de la mucosa nasal (secreción)?", options: ["A) Olfatorio", "B) Facial (parasimpático)", "C) Trigémino", "D) Óptico"], answer: 1 },
+    { topic: "Olfato", question: "200. La sensibilidad general (dolor, tacto) de la cavidad nasal es llevada por:", options: ["A) Nervio Olfatorio", "B) Nervio Trigémino (V1 y V2)", "C) Nervio Facial", "D) Nervio Vago"], answer: 1 }
+];
+
+let score = 0;
+let currentTotalQuestions = 0;
+
+// Función para mezclar (Fisher-Yates Shuffle)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function startQuiz() {
+    // Reiniciar puntaje
+    score = 0;
+    document.getElementById('score').textContent = score;
+    
+    const quizContainer = document.getElementById('quiz-container');
+    quizContainer.innerHTML = ""; // Limpiar cuestionario anterior
+    
+    // Obtener número de preguntas por tema (validación básica)
+    let numPerTopic = parseInt(document.getElementById('numQuestions').value);
+    if (numPerTopic < 1) numPerTopic = 1;
+    if (numPerTopic > 10) numPerTopic = 10;
+
+    // Agrupar por temas
+    const questionsByTopic = allQuestions.reduce((acc, q) => {
+        if (!acc[q.topic]) acc[q.topic] = [];
+        acc[q.topic].push(q);
+        return acc;
+    }, {});
+
+    let totalQuestionsGenerated = 0;
+
+    // Generar HTML
+    for (const topic in questionsByTopic) {
+        // 1. Mezclar las preguntas del tema
+        const shuffledQuestions = shuffleArray([...questionsByTopic[topic]]); // Copia y mezcla
+        
+        // 2. Seleccionar las primeras N preguntas
+        const selectedQuestions = shuffledQuestions.slice(0, numPerTopic);
+        
+        totalQuestionsGenerated += selectedQuestions.length;
+
+        // 3. Renderizar
+        const topicHeader = document.createElement('h2');
+        topicHeader.textContent = topic;
+        quizContainer.appendChild(topicHeader);
+
+        selectedQuestions.forEach((q, qIndex) => {
+            const qBlock = document.createElement('div');
+            qBlock.classList.add('question-block');
+
+            const qText = document.createElement('div');
+            qText.classList.add('question-text');
+            qText.textContent = q.question;
+            qBlock.appendChild(qText);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.classList.add('options');
+
+            q.options.forEach((opt, optIndex) => {
+                const btn = document.createElement('button');
+                btn.classList.add('option-btn');
+                btn.textContent = opt;
+                btn.onclick = function() {
+                    // Desactivar botones de esta pregunta
+                    const allBtns = optionsDiv.querySelectorAll('.option-btn');
+                    allBtns.forEach(b => b.disabled = true);
+
+                    if (optIndex === q.answer) {
+                        btn.classList.add('correct');
+                        score++;
+                        document.getElementById('score').textContent = score;
+                    } else {
+                        btn.classList.add('incorrect');
+                        allBtns[q.answer].classList.add('correct'); // Mostrar la correcta
+                    }
+                };
+                optionsDiv.appendChild(btn);
+            });
+
+            qBlock.appendChild(optionsDiv);
+            quizContainer.appendChild(qBlock);
+        });
+    }
+
+    // Actualizar el total posible
+    document.getElementById('total-possible').textContent = totalQuestionsGenerated;
+}
+
+</script>
+
+</body>
+</html>
